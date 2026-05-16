@@ -127,3 +127,126 @@ Respond in this JSON format:
     return null;
   }
 };
+
+export const generateTopicsQuestions = async (topics) => {
+  if (topics.length === 0) return [];
+
+  try {
+    const topicList = topics.map(t => {
+      const keywords = Array.isArray(t.keywords) ? t.keywords.join(', ') : t.keywords;
+      return `- ${t.title}: ${t.description || ''} (keywords: ${keywords})`;
+    }).join('\n');
+
+    const prompt = `You are an English teacher for Uzbek students. Generate 10 multiple choice questions based on these topics:
+
+${topicList}
+
+The questions should test understanding of:
+- Grammar concepts
+- Vocabulary usage
+- Sentence formation
+- Topic-specific knowledge
+
+Generate questions in this JSON format (no other text):
+[
+  {
+    "question": "question in English",
+    "options": ["option A", "option B", "option C", "option D"],
+    "correctAnswer": "correct option"
+  }
+]
+
+Rules:
+- Questions should be challenging but appropriate for intermediate learners
+- Mix different types of questions
+- Return exactly 10 questions
+- Use simple English in questions`;
+
+    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 2048,
+        },
+        systemInstruction: {
+          parts: [{ text: 'Respond only with valid JSON array, no explanations or markdown' }]
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+
+    return [];
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    return null;
+  }
+};
+
+export const checkSentenceWithAI = async (question, userAnswer, correctAnswer) => {
+  try {
+    const prompt = `You are an English teacher for Uzbek students.
+
+Question: ${question}
+Expected concept: ${correctAnswer}
+
+Student's answer: "${userAnswer}"
+
+Determine if the student's answer is correct. Consider:
+- Understanding of the concept
+- Accuracy of the answer
+- Completeness
+
+Respond in this JSON format:
+{
+  "isCorrect": true or false,
+  "feedback": "short feedback message in Uzbek (1-2 sentences)"
+}`;
+
+    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 512,
+        }
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('API request failed');
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Gemini API error:', error);
+    return null;
+  }
+};

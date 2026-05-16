@@ -25,6 +25,7 @@ const Navbar = ({ collapsed, setCollapsed }) => {
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: Home },
     { path: '/vocabulary', label: 'Lug\'at', icon: BookOpen },
+    { path: '/topics', label: 'Mavzular', icon: Target },
     { path: '/grammar', label: 'Grammatika', icon: FileText },
     { path: '/irregular-verbs', label: 'Irregular', icon: FileText },
     { path: '/tests', label: 'Testlar', icon: Trophy },
