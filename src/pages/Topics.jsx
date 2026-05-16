@@ -178,13 +178,22 @@ const Topics = () => {
     setAiStage('questions');
     setAiScore({ correct: 0, incorrect: 0, sentences: 0 });
 
-    const questions = await generateTopicsQuestions(topics);
+    console.log('Starting AI practice with topics:', topics.length);
 
-    if (questions && questions.length > 0) {
-      setAiQuestions(questions);
-      setAiCurrentIndex(0);
-      setAiQuestion(questions[0]);
-    } else {
+    try {
+      const questions = await generateTopicsQuestions(topics);
+      console.log('Generated questions:', questions?.length || 0);
+
+      if (questions && questions.length > 0) {
+        setAiQuestions(questions);
+        setAiCurrentIndex(0);
+        setAiQuestion(questions[0]);
+      } else {
+        alert('Savollar generatsiya qilishda xatolik yuz berdi. Qayta urinib ko\'ring.');
+        setAiPracticeActive(false);
+      }
+    } catch (error) {
+      console.error('Error generating questions:', error);
       alert('Savollar generatsiya qilishda xatolik yuz berdi. Qayta urinib ko\'ring.');
       setAiPracticeActive(false);
     }

@@ -1,4 +1,4 @@
-const API_KEY = 'AIzaSyAaE1xmBze2xSH2MaosfyBykBNPW4agOPI';
+const API_KEY = 'AIzaSyAoqt2QYyqx6MFe9vs-zq8Sa9I48cGYs9U';
 const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export const generateQuestionsWithGemini = async (words) => {
@@ -133,11 +133,13 @@ export const generateTopicsQuestions = async (topics) => {
 
   try {
     const topicList = topics.map(t => {
-      const keywords = Array.isArray(t.keywords) ? t.keywords.join(', ') : t.keywords;
+      const keywords = Array.isArray(t.keywords) ? t.keywords.join(', ') : (t.keywords || '');
       return `- ${t.title}: ${t.description || ''} (keywords: ${keywords})`;
     }).join('\n');
 
-    const prompt = `You are an English teacher for Uzbek students. Generate 10 multiple choice questions based on these topics:
+    console.log('Generating questions for topics:', topics.length);
+
+    const prompt = `You are an English teacher for Uzbek students. Generate 10 fill-in-the-blank questions based on these topics:
 
 ${topicList}
 
@@ -147,20 +149,20 @@ The questions should test understanding of:
 - Sentence formation
 - Topic-specific knowledge
 
-Generate questions in this JSON format (no other text):
+Generate questions in this JSON format (no other text, just the array):
 [
   {
-    "question": "question in English",
-    "options": ["option A", "option B", "option C", "option D"],
-    "correctAnswer": "correct option"
+    "question": "What is the correct form? ___ have been to London before.",
+    "correctAnswer": "has"
   }
 ]
 
 Rules:
-- Questions should be challenging but appropriate for intermediate learners
-- Mix different types of questions
+- Use fill-in-the-blank format, not multiple choice
+- Questions should test grammar and vocabulary
 - Return exactly 10 questions
-- Use simple English in questions`;
+- Use simple English in questions
+- correctAnswer should be a short word or phrase`;
 
     const response = await fetch(`${API_URL}?key=${API_KEY}`, {
       method: 'POST',
@@ -172,25 +174,32 @@ Rules:
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 2048,
-        },
-        systemInstruction: {
-          parts: [{ text: 'Respond only with valid JSON array, no explanations or markdown' }]
         }
       })
     });
 
+    console.log('API response status:', response.status);
+
     if (!response.ok) {
-      throw new Error('API request failed');
+      const errorText = await response.text();
+      console.error('API error response:', errorText);
+      throw new Error(`API request failed: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log('API response data:', JSON.stringify(data).substring(0, 200));
+
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    console.log('Response text:', text.substring(0, 200));
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      console.log('Parsed questions:', parsed.length);
+      return parsed;
     }
 
+    console.error('No JSON found in response');
     return [];
   } catch (error) {
     console.error('Gemini API error:', error);
