@@ -31,6 +31,7 @@ const Vocabulary = () => {
   const [aiFinished, setAiFinished] = useState(false);
   const [aiQuestions, setAiQuestions] = useState([]);
   const [aiCurrentIndex, setAiCurrentIndex] = useState(0);
+  const [aiFeedback, setAiFeedback] = useState('');
 
   const [newWord, setNewWord] = useState({ word: '', translation: '', example: '', category: 'Basic' });
 
@@ -276,26 +277,87 @@ const Vocabulary = () => {
     setReviewFinished(false);
   };
 
-  // AI Practice Functions
+  // AI Practice Functions - Enhanced version
   const generateAIQuestions = () => {
     if (words.length < 3) return [];
+
+    // Multiple question types for variety
+    const questionTypes = ['translation', 'sentence', 'fillBlank', 'meaning'];
 
     // Select random words for practice
     const shuffled = [...words].sort(() => Math.random() - 0.5);
     const selectedWords = shuffled.slice(0, Math.min(10, words.length));
 
-    const questions = selectedWords.map(word => {
-      // Create a question based on the word
-      const templates = [
-        { question: `"${word.translation}" so'zini inglizchada qanday yoziladi?`, answer: word.word },
-        { question: `"${word.word}" so'zining o'zbekcha tarjimasi nima?`, answer: word.translation },
-        { question: `"${word.translation}" - bu so'zning inglizchasi write in English:`, answer: word.word },
-      ];
-      const template = templates[Math.floor(Math.random() * templates.length)];
-      return { ...template, word };
+    const questions = selectedWords.map((word, index) => {
+      // Rotate through different question types
+      const type = questionTypes[index % questionTypes.length];
+
+      let question, answer, hint;
+
+      switch (type) {
+        case 'sentence':
+          // Use the example sentence - remove the word and ask user to fill it
+          const exampleWords = word.example.split(' ');
+          const maskedExample = exampleWords.map(w =>
+            w.toLowerCase().includes(word.word.toLowerCase())
+              ? '_____'
+              : w
+          ).join(' ');
+
+          question = `Complete the sentence:\n"${maskedExample}"\n\nWhat word fits in the blank?`;
+          answer = word.word;
+          hint = `Hint: ${word.translation}`;
+          break;
+
+        case 'fillBlank':
+          // Create a fill in the blank question
+          question = `Fill in the blank:\n"${word.example.replace(word.word, '_____')}"\n\nWrite the missing word:`;
+          answer = word.word;
+          hint = `Hint: ${word.translation}`;
+          break;
+
+        case 'meaning':
+          // Ask for meaning
+          question = `What is the meaning of "${word.word}" in Uzbek?`;
+          answer = word.translation;
+          hint = `Example: ${word.example}`;
+          break;
+
+        case 'translation':
+        default:
+          // Translation question
+          question = `Translate to English:\n"${word.translation}"`;
+          answer = word.word;
+          hint = `Use in a sentence: ${word.example}`;
+          break;
+      }
+
+      return { question, answer, hint, type, word };
     });
 
     return questions;
+  };
+
+  const generateFeedback = (isCorrect, userAnswer, correctAnswer, word) => {
+    if (isCorrect) {
+      const correctFeedback = [
+        `Perfect! 🎉 "${correctAnswer}" is correct!`,
+        `Great job! ✅ You got it right!`,
+        `Excellent! 🌟 "${correctAnswer}" is correct!`,
+        `Amazing! ⭐ You nailed it!`,
+        `Well done! 💪 "${correctAnswer}" is correct!`,
+      ];
+      return correctFeedback[Math.floor(Math.random() * correctFeedback.length)];
+    } else {
+      const incorrectFeedback = [
+        `Not quite. ❌ The correct answer is "${correctAnswer}".`,
+        `Almost! The answer is "${correctAnswer}".`,
+        `Keep practicing! ✅ The correct word is "${correctAnswer}".`,
+        `Close! ✨ The right answer is "${correctAnswer}".`,
+        `Don't worry! 📚 "${correctAnswer}" is correct.`,
+      ];
+      return incorrectFeedback[Math.floor(Math.random() * incorrectFeedback.length)];
+    }
   };
 
   const startAIPractice = () => {
@@ -310,6 +372,7 @@ const Vocabulary = () => {
       setAiScore({ correct: 0, incorrect: 0 });
       setAiFinished(false);
       setAiPracticeActive(true);
+      setAiFeedback('');
     }
   };
 
@@ -351,6 +414,10 @@ const Vocabulary = () => {
       userAnswer.includes(correctAnswer) ||
       correctAnswer.includes(userAnswer);
 
+    // Generate personalized feedback
+    const feedback = generateFeedback(isCorrect, aiUserAnswer.trim(), currentQ.answer, currentQ.word);
+    setAiFeedback(feedback);
+
     setAiIsCorrect(isCorrect);
     setAiShowResult(true);
 
@@ -368,6 +435,7 @@ const Vocabulary = () => {
       setAiUserAnswer('');
       setAiShowResult(false);
       setAiIsCorrect(null);
+      setAiFeedback('');
     } else {
       setAiFinished(true);
     }
@@ -868,6 +936,9 @@ const Vocabulary = () => {
                   <div className="question-display">
                     <span className="question-label">Savol</span>
                     <h2>{aiQuestion?.question}</h2>
+                    {!aiShowResult && aiQuestion?.hint && (
+                      <p className="question-hint">{aiQuestion.hint}</p>
+                    )}
                   </div>
 
                   <div className="answer-section">
@@ -884,19 +955,18 @@ const Vocabulary = () => {
 
                   {aiShowResult && (
                     <div className={`answer-feedback ${aiIsCorrect ? 'correct' : 'incorrect'}`}>
-                      {aiIsCorrect ? (
-                        <div className="feedback-content correct">
-                          <Check size={24} /> <span>To'g'ri!</span>
+                      <div className="feedback-content">
+                        {aiIsCorrect ? <Check size={24} /> : <X size={24} />}
+                        <div className="feedback-text">
+                          <span className="feedback-main">{aiFeedback}</span>
+                          {!aiIsCorrect && (
+                            <div className="correct-answer">
+                              <span>To'g'ri javob:</span>
+                              <strong>{aiQuestion?.answer}</strong>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <div className="feedback-content incorrect">
-                          <X size={24} />
-                          <div className="correct-answer">
-                            <span>To'g'ri javob:</span>
-                            <strong>{aiQuestion?.answer}</strong>
-                          </div>
-                        </div>
-                      )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1824,6 +1894,40 @@ const Vocabulary = () => {
           display: inline-flex;
           align-items: center;
           gap: 8px;
+        }
+
+        .question-hint {
+          display: inline-block;
+          margin-top: 12px;
+          padding: 8px 16px;
+          background: rgba(139, 92, 246, 0.15);
+          border: 1px solid rgba(139, 92, 246, 0.3);
+          border-radius: 8px;
+          color: var(--accent-primary);
+          font-size: 14px;
+        }
+
+        .ai-practice .feedback-text {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .ai-practice .feedback-main {
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+
+        .ai-practice .feedback-content {
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+        }
+
+        .ai-practice .feedback-content svg {
+          flex-shrink: 0;
+          margin-top: 2px;
         }
       `}</style>
     </div>
