@@ -39,6 +39,9 @@ Rules:
         generationConfig: {
           temperature: 0.7,
           maxOutputTokens: 2048,
+        },
+        systemInstruction: {
+          parts: [{ text: 'Respond only with valid JSON array, no explanations or markdown' }]
         }
       })
     });
@@ -99,6 +102,9 @@ Respond in this JSON format:
         generationConfig: {
           temperature: 0.3,
           maxOutputTokens: 512,
+        },
+        systemInstruction: {
+          parts: [{ text: 'Respond only with JSON, no explanations' }]
         }
       })
     });
