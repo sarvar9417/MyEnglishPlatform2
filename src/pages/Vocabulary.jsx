@@ -409,10 +409,24 @@ const Vocabulary = () => {
     const userAnswer = aiUserAnswer.trim().toLowerCase();
     const correctAnswer = currentQ.answer.trim().toLowerCase();
 
-    // Simple check - check if the answer is close enough
-    const isCorrect = userAnswer === correctAnswer ||
+    // More flexible check - split by words and check if key words match
+    const userWords = userAnswer.split(/\s+/).filter(w => w.length > 1);
+    const correctWords = correctAnswer.split(/\s+/).filter(w => w.length > 1);
+
+    // Check if any of user's words match any of correct answer words
+    const hasMatchingWord = userWords.some(uw =>
+      correctWords.some(cw => cw.includes(uw) || uw.includes(cw))
+    );
+
+    // For meaning questions (Uzbek to English), be more lenient
+    // For English answers, strict match
+    const isMeaningQuestion = currentQ.type === 'meaning';
+
+    const isCorrect =
+      userAnswer === correctAnswer ||
       userAnswer.includes(correctAnswer) ||
-      correctAnswer.includes(userAnswer);
+      correctAnswer.includes(userAnswer) ||
+      (isMeaningQuestion && hasMatchingWord);
 
     // Generate personalized feedback
     const feedback = generateFeedback(isCorrect, aiUserAnswer.trim(), currentQ.answer, currentQ.word);
