@@ -1,7 +1,15 @@
 -- Vocabulary Words Database Setup
 -- Run this SQL in your Supabase SQL Editor
 
--- Insert vocabulary words for your account
+-- 1. Delete duplicates - keep only the first occurrence of each word per user
+DELETE FROM vocabulary
+WHERE id NOT IN (
+  SELECT MIN(id)
+  FROM vocabulary
+  GROUP BY LOWER(word), user_id
+);
+
+-- 2. Insert vocabulary words (duplicates will be ignored due to ON CONFLICT)
 INSERT INTO vocabulary (word, translation, example, category, user_id, next_review, review_count, created_at) VALUES
 ('bacon', 'bekon', 'Bacon is usually eaten on weekends.', 'Basic', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW()),
 ('bagel', 'non turi', 'Bagels are popular for breakfast in America.', 'Basic', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW()),
@@ -34,4 +42,5 @@ INSERT INTO vocabulary (word, translation, example, category, user_id, next_revi
 ('sugar', 'shakar', 'Some cereals have a lot of sugar.', 'Basic', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW()),
 ('unbeatable', 'engib bolmas', 'Uzbek breakfast is unbeatable.', 'Intermediate', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW()),
 ('vietnamese', 'Vetnam', 'Shes Vietnamese.', 'Advanced', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW()),
-('young', 'yosh', 'She was very young then.', 'Basic', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW());
+('young', 'yosh', 'She was very young then.', 'Basic', 'd0e40305-47d1-4ff5-9b74-b1691aceb98c', NOW(), 0, NOW())
+ON CONFLICT DO NOTHING;

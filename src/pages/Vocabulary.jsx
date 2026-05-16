@@ -97,6 +97,13 @@ const Vocabulary = () => {
   };
 
   const saveWord = async (wordData) => {
+    // Check for duplicates
+    const isDuplicate = words.some(w => w.word.toLowerCase() === wordData.word.toLowerCase());
+    if (isDuplicate) {
+      alert('Bu so\'z allaqachon mavjud!');
+      return;
+    }
+
     const wordWithMeta = {
       ...wordData,
       user_id: user?.id || 'local',
