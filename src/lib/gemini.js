@@ -139,30 +139,31 @@ export const generateTopicsQuestions = async (topics) => {
 
     console.log('Generating questions for topics:', topics.length);
 
-    const prompt = `You are an English teacher for Uzbek students. Generate 10 fill-in-the-blank questions based on these topics:
+    const prompt = `You are an English teacher for Uzbek students. Generate exactly 15 questions (5 of each type) based on these topics:
 
 ${topicList}
-
-The questions should test understanding of:
-- Grammar concepts
-- Vocabulary usage
-- Sentence formation
-- Topic-specific knowledge
 
 Generate questions in this JSON format (no other text, just the array):
 [
   {
-    "question": "What is the correct form? ___ have been to London before.",
-    "correctAnswer": "has"
+    "type": "fillBlank|wordOrder|translation",
+    "question": "the question text",
+    "correctAnswer": "the correct answer",
+    "shuffledWords": "for wordOrder: comma separated shuffled words",
+    "uzbekText": "for translation: Uzbek text to translate"
   }
 ]
 
+Type details:
+- fillBlank: English sentence with _____ (5 questions)
+- wordOrder: Give shuffled English words, user orders them (5 questions)
+- translation: Translate Uzbek sentence to English (5 questions)
+
 Rules:
-- Use fill-in-the-blank format, not multiple choice
-- Questions should test grammar and vocabulary
-- Return exactly 10 questions
+- Return exactly 15 questions (5 fillBlank, 5 wordOrder, 5 translation)
 - Use simple English in questions
-- correctAnswer should be a short word or phrase`;
+- For wordOrder: shuffledWords should be the words of the correct sentence shuffled
+- For translation: include uzbekText field with the Uzbek sentence to translate`;
 
     const response = await fetch(GROQ_API_URL, {
       method: 'POST',
@@ -177,7 +178,7 @@ Rules:
           { role: 'user', content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 2048
+        max_tokens: 3072
       })
     });
 
@@ -190,15 +191,12 @@ Rules:
     }
 
     const data = await response.json();
-    console.log('API response data:', JSON.stringify(data).substring(0, 200));
-
     const text = data.choices?.[0]?.message?.content || '';
-    console.log('Response text:', text.substring(0, 200));
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      console.log('Parsed questions:', parsed.length);
+      console.log('Parsed questions:', parsed.length, 'types:', parsed.filter(q => q.type === 'fillBlank').length, 'fillBlank,', parsed.filter(q => q.type === 'wordOrder').length, 'wordOrder,', parsed.filter(q => q.type === 'translation').length, 'translation');
       return parsed;
     }
 

@@ -203,34 +203,54 @@ const Topics = () => {
 
   const checkAIAnswer = async () => {
     const currentQ = aiQuestions[aiCurrentIndex];
+    const userAnswer = aiUserAnswer.trim().toLowerCase();
+    const correctAnswer = currentQ.correctAnswer.toLowerCase();
+
     setAiLoadingAnswer(true);
 
+    // Handle different question types
+    let isCorrect = false;
+
+    if (currentQ.type === 'wordOrder') {
+      // For word order, compare the words in order
+      const userWords = userAnswer.split(/\s+/).filter(w => w);
+      const correctWords = correctAnswer.split(/\s+/).filter(w => w);
+
+      // Check if all words are present and in correct order
+      isCorrect = userWords.length === correctWords.length &&
+        userWords.every((w, i) => w === correctWords[i]);
+    } else if (currentQ.type === 'fillBlank') {
+      // For fill in the blank
+      isCorrect = userAnswer === correctAnswer ||
+        correctAnswer.includes(userAnswer) ||
+        userAnswer.includes(correctAnswer);
+    } else {
+      // For translation
+      const userWords = userAnswer.split(/\s+/).filter(w => w.length > 2);
+      const correctWords = correctAnswer.split(/\s+/).filter(w => w.length > 2);
+      const matchingWords = userWords.filter(w => correctWords.some(cw => cw.includes(w) || w.includes(cw)));
+      isCorrect = matchingWords.length >= correctWords.length * 0.5;
+    }
+
+    // Get AI feedback
     const result = await checkSentenceWithAI(
-      currentQ.question,
+      currentQ.type + ': ' + currentQ.question,
       aiUserAnswer.trim(),
       currentQ.correctAnswer
     );
 
-    if (result) {
-      setAiIsCorrect(result.isCorrect);
+    if (result && result.feedback) {
       setAiFeedback(result.feedback);
-
-      if (result.isCorrect) {
-        setAiScore(prev => ({ ...prev, correct: prev.correct + 1 }));
-      } else {
-        setAiScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
-      }
     } else {
-      // Fallback
-      const isCorrect = aiUserAnswer.trim().toLowerCase() === currentQ.correctAnswer.toLowerCase();
-      setAiIsCorrect(isCorrect);
-      setAiFeedback(isCorrect ? 'To\'g\'ri! 🎉' : `Noto\'g\'ri. To\'g\'ri javob: ${currentQ.correctAnswer}`);
+      setAiFeedback(isCorrect ? 'To\'g\'ri! 🎉' : `Noto'g'ri. To'g'ri javob: ${currentQ.correctAnswer}`);
+    }
 
-      if (isCorrect) {
-        setAiScore(prev => ({ ...prev, correct: prev.correct + 1 }));
-      } else {
-        setAiScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
-      }
+    setAiIsCorrect(isCorrect);
+
+    if (isCorrect) {
+      setAiScore(prev => ({ ...prev, correct: prev.correct + 1 }));
+    } else {
+      setAiScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
     }
 
     setAiShowResult(true);
@@ -238,25 +258,37 @@ const Topics = () => {
   };
 
   const nextAIQuestion = () => {
-    if (aiCurrentIndex < aiQuestions.length - 1) {
-      setAiCurrentIndex(prev => prev + 1);
-      setAiQuestion(aiQuestions[aiCurrentIndex + 1]);
+    const currentType = aiQuestion?.type;
+    const nextIndex = aiCurrentIndex + 1;
+
+    // Check if we need to move to next stage
+    const fillBlankCount = aiQuestions.filter(q => q.type === 'fillBlank').length;
+    const wordOrderCount = aiQuestions.filter(q => q.type === 'wordOrder').length;
+
+    // Determine which stage we're in
+    let nextStage = aiStage;
+    let nextQuestionIndex = nextIndex;
+
+    if (currentType === 'fillBlank' && nextIndex >= fillBlankCount) {
+      // Move to wordOrder stage
+      nextStage = 'wordOrder';
+      nextQuestionIndex = fillBlankCount;
+    } else if (currentType === 'wordOrder' && nextIndex >= fillBlankCount + wordOrderCount) {
+      // Move to translation stage
+      nextStage = 'translation';
+      nextQuestionIndex = fillBlankCount + wordOrderCount;
+    }
+
+    if (nextQuestionIndex < aiQuestions.length) {
+      setAiCurrentIndex(nextQuestionIndex);
+      setAiQuestion(aiQuestions[nextQuestionIndex]);
       setAiUserAnswer('');
       setAiShowResult(false);
       setAiIsCorrect(null);
       setAiFeedback('');
+      setAiStage(nextStage);
     } else {
-      // Move to sentence practice
-      if (aiStage === 'questions') {
-        setAiStage('sentences');
-        setAiCurrentIndex(0);
-        setAiUserAnswer('');
-        setAiShowResult(false);
-        setAiIsCorrect(null);
-        setAiFeedback('');
-      } else {
-        setAiFinished(true);
-      }
+      setAiFinished(true);
     }
   };
 
@@ -616,8 +648,16 @@ Respond in this JSON format:
             ) : aiStage === 'questions' ? (
               <div className="ai-practice">
                 <div className="practice-header">
-                  <span className="stage-badge">Savollar</span>
-                  <span className="question-counter">Savol {aiCurrentIndex + 1} / {aiQuestions.length}</span>
+                  <span className="stage-badge">
+                    {aiQuestion?.type === 'fillBlank' ? '1. Bo\'shliqni to\'ldiring' :
+                     aiQuestion?.type === 'wordOrder' ? '2. So\'zlarni tartiblang' :
+                     '3. Tarjima qiling'}
+                  </span>
+                  <span className="question-counter">
+                    {aiQuestion?.type === 'fillBlank' ? `Savol ${aiCurrentIndex + 1} / 5` :
+                     aiQuestion?.type === 'wordOrder' ? `Savol ${aiCurrentIndex + 1} / 5` :
+                     `Savol ${aiCurrentIndex + 1} / 5`}
+                  </span>
                   <div className="progress-bar">
                     <div className="progress-bar-fill" style={{ width: `${((aiCurrentIndex + 1) / aiQuestions.length) * 100}%` }}></div>
                   </div>
@@ -626,15 +666,41 @@ Respond in this JSON format:
                 <div className="question-card card">
                   <div className="question-display">
                     <span className="question-label">Savol</span>
+
+                    {/* Show shuffled words for wordOrder type */}
+                    {aiQuestion?.type === 'wordOrder' && aiQuestion?.shuffledWords && (
+                      <div className="shuffled-words">
+                        {aiQuestion.shuffledWords.split(',').map((word, i) => (
+                          <span key={i} className="shuffled-word">{word.trim()}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Show Uzbek text for translation type */}
+                    {aiQuestion?.type === 'translation' && aiQuestion?.uzbekText && (
+                      <div className="uzbek-text">
+                        <span>O'zbekcha:</span>
+                        <p>{aiQuestion.uzbekText}</p>
+                      </div>
+                    )}
+
                     <h2>{aiQuestion?.question}</h2>
                   </div>
 
                   <div className="answer-section">
-                    <label>Javobingiz:</label>
+                    <label>
+                      {aiQuestion?.type === 'fillBlank' ? 'To\'ldiring:' :
+                       aiQuestion?.type === 'wordOrder' ? 'Gapni tartiblang (so\'zlarni oraliq bilan):' :
+                       'Inglizcha tarjima:'}
+                    </label>
                     <input
                       type="text"
                       className="input-field"
-                      placeholder="Javobingizni yozing..."
+                      placeholder={
+                        aiQuestion?.type === 'fillBlank' ? 'Javobni yozing...' :
+                        aiQuestion?.type === 'wordOrder' ? 'So\'zlarni tartiblang...' :
+                        'Inglizcha gap yozing...'
+                      }
                       value={aiUserAnswer}
                       onChange={(e) => setAiUserAnswer(e.target.value)}
                       disabled={aiShowResult}
@@ -667,7 +733,7 @@ Respond in this JSON format:
                     </button>
                   ) : (
                     <button className="btn-primary" onClick={nextAIQuestion}>
-                      {aiCurrentIndex < aiQuestions.length - 1 ? 'Keyingi savol' : 'Gaplar tuzishga o\'tish'} <ArrowRight size={18} />
+                      {aiCurrentIndex < aiQuestions.length - 1 ? 'Keyingi savol' : 'Yakunlash'} <ArrowRight size={18} />
                     </button>
                   )}
                 </div>
@@ -1214,6 +1280,48 @@ Respond in this JSON format:
         .btn-spinner {
           animation: spin 1s linear infinite;
           margin-right: 8px;
+        }
+
+        .shuffled-words {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          justify-content: center;
+          margin: 16px 0;
+          padding: 16px;
+          background: rgba(139, 92, 246, 0.1);
+          border-radius: 12px;
+        }
+
+        .shuffled-word {
+          background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+          color: white;
+          padding: 8px 14px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 14px;
+        }
+
+        .uzbek-text {
+          background: rgba(110, 231, 183, 0.1);
+          border: 1px solid var(--success);
+          border-radius: 12px;
+          padding: 16px;
+          margin: 16px 0;
+          text-align: left;
+        }
+
+        .uzbek-text span {
+          font-size: 12px;
+          color: var(--success);
+          text-transform: uppercase;
+        }
+
+        .uzbek-text p {
+          font-size: 18px;
+          color: var(--text-primary);
+          margin-top: 8px;
+          font-weight: 500;
         }
 
         /* Sentence Practice */
