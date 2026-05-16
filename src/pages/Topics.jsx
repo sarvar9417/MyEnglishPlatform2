@@ -301,17 +301,25 @@ Respond in this JSON format:
 }`;
 
     try {
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyAaE1xmBze2xSH2MaosfyBykBNPW4agOPI', {
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`
+        },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 512 }
+          model: 'llama-3.3-70b-versatile',
+          messages: [
+            { role: 'system', content: 'You are an English teacher. Respond only with JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.3,
+          max_tokens: 512
         })
       });
 
       const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const text = data.choices?.[0]?.message?.content || '';
       const jsonMatch = text.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {

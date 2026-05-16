@@ -1,5 +1,6 @@
-const API_KEY = 'AIzaSyAoqt2QYyqx6MFe9vs-zq8Sa9I48cGYs9U';
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+// Groq API for AI features
+const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export const generateQuestionsWithGemini = async (words) => {
   if (words.length < 3) return [];
@@ -29,20 +30,20 @@ Rules:
 - Mix question types evenly
 - Return exactly 10 questions`;
 
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        },
-        systemInstruction: {
-          parts: [{ text: 'Respond only with valid JSON array, no explanations or markdown' }]
-        }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are an English teacher. Respond only with valid JSON array, no explanations or markdown.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048
       })
     });
 
@@ -51,9 +52,8 @@ Rules:
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.choices?.[0]?.message?.content || '';
 
-    // Extract JSON from response
     const jsonMatch = text.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
       const questions = JSON.parse(jsonMatch[0]);
@@ -65,7 +65,7 @@ Rules:
 
     return [];
   } catch (error) {
-    console.error('Gemini API error:', error);
+    console.error('Groq API error:', error);
     return null;
   }
 };
@@ -92,20 +92,20 @@ Respond in this JSON format:
   "suggestion": "if wrong, suggest what the correct answer might be"
 }`;
 
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 512,
-        },
-        systemInstruction: {
-          parts: [{ text: 'Respond only with JSON, no explanations' }]
-        }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are an English teacher. Respond only with JSON, no explanations.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 512
       })
     });
 
@@ -114,7 +114,7 @@ Respond in this JSON format:
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.choices?.[0]?.message?.content || '';
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -123,7 +123,7 @@ Respond in this JSON format:
 
     return null;
   } catch (error) {
-    console.error('Gemini API error:', error);
+    console.error('Groq API error:', error);
     return null;
   }
 };
@@ -164,17 +164,20 @@ Rules:
 - Use simple English in questions
 - correctAnswer should be a short word or phrase`;
 
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are an English teacher. Respond only with valid JSON array.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2048
       })
     });
 
@@ -189,7 +192,7 @@ Rules:
     const data = await response.json();
     console.log('API response data:', JSON.stringify(data).substring(0, 200));
 
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.choices?.[0]?.message?.content || '';
     console.log('Response text:', text.substring(0, 200));
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);
@@ -202,7 +205,7 @@ Rules:
     console.error('No JSON found in response');
     return [];
   } catch (error) {
-    console.error('Gemini API error:', error);
+    console.error('Groq API error:', error);
     return null;
   }
 };
@@ -227,17 +230,20 @@ Respond in this JSON format:
   "feedback": "short feedback message in Uzbek (1-2 sentences)"
 }`;
 
-    const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+    const response = await fetch(GROQ_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 512,
-        }
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: 'You are an English teacher. Respond only with JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 512
       })
     });
 
@@ -246,7 +252,7 @@ Respond in this JSON format:
     }
 
     const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const text = data.choices?.[0]?.message?.content || '';
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
@@ -255,7 +261,7 @@ Respond in this JSON format:
 
     return null;
   } catch (error) {
-    console.error('Gemini API error:', error);
+    console.error('Groq API error:', error);
     return null;
   }
 };
