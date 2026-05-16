@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, BookOpen, Play, Check, X, ChevronLeft, ChevronRight, RefreshCw, Calendar, Clock, Volume2, Pencil, ArrowRight } from 'lucide-react';
+import { generateQuestionsWithGemini, checkAnswerWithGemini } from '../lib/gemini';
+import { Plus, Search, BookOpen, Play, Check, X, ChevronLeft, ChevronRight, RefreshCw, Calendar, Clock, Volume2, Pencil, ArrowRight, Loader2 } from 'lucide-react';
 
 const Vocabulary = () => {
   const { user } = useAuth();
@@ -32,6 +33,8 @@ const Vocabulary = () => {
   const [aiQuestions, setAiQuestions] = useState([]);
   const [aiCurrentIndex, setAiCurrentIndex] = useState(0);
   const [aiFeedback, setAiFeedback] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiLoadingAnswer, setAiLoadingAnswer] = useState(false);
 
   const [newWord, setNewWord] = useState({ word: '', translation: '', example: '', category: 'Basic' });
 
@@ -360,9 +363,14 @@ const Vocabulary = () => {
     }
   };
 
-  const startAIPractice = () => {
-    const questions = generateAIQuestions();
-    if (questions.length > 0) {
+  const startAIPractice = async () => {
+    setAiLoading(true);
+    setAiPracticeActive(true);
+
+    // Try to get questions from Gemini API
+    const questions = await generateQuestionsWithGemini(words);
+
+    if (questions && questions.length > 0) {
       setAiQuestions(questions);
       setAiCurrentIndex(0);
       setAiQuestion(questions[0]);
@@ -371,9 +379,24 @@ const Vocabulary = () => {
       setAiIsCorrect(null);
       setAiScore({ correct: 0, incorrect: 0 });
       setAiFinished(false);
-      setAiPracticeActive(true);
       setAiFeedback('');
+    } else {
+      // Fallback to local questions if API fails
+      const localQuestions = generateAIQuestions();
+      if (localQuestions.length > 0) {
+        setAiQuestions(localQuestions);
+        setAiCurrentIndex(0);
+        setAiQuestion(localQuestions[0]);
+        setAiUserAnswer('');
+        setAiShowResult(false);
+        setAiIsCorrect(null);
+        setAiScore({ correct: 0, incorrect: 0 });
+        setAiFinished(false);
+        setAiFeedback('');
+      }
     }
+
+    setAiLoading(false);
   };
 
   // Handle Enter key for AI practice
@@ -404,42 +427,59 @@ const Vocabulary = () => {
     }
   }, [activeTab, aiPracticeActive, aiFinished, aiShowResult, aiCurrentIndex]);
 
-  const checkAIAnswer = () => {
+  const checkAIAnswer = async () => {
     const currentQ = aiQuestions[aiCurrentIndex];
-    const userAnswer = aiUserAnswer.trim().toLowerCase();
-    const correctAnswer = currentQ.answer.trim().toLowerCase();
+    setAiLoadingAnswer(true);
 
-    // More flexible check - split by words and check if key words match
-    const userWords = userAnswer.split(/\s+/).filter(w => w.length > 1);
-    const correctWords = correctAnswer.split(/\s+/).filter(w => w.length > 1);
-
-    // Check if any of user's words match any of correct answer words
-    const hasMatchingWord = userWords.some(uw =>
-      correctWords.some(cw => cw.includes(uw) || uw.includes(cw))
+    // Try Gemini API for answer checking
+    const geminiResult = await checkAnswerWithGemini(
+      currentQ.question,
+      aiUserAnswer.trim(),
+      currentQ.word
     );
 
-    // For meaning questions (Uzbek to English), be more lenient
-    // For English answers, strict match
-    const isMeaningQuestion = currentQ.type === 'meaning';
+    if (geminiResult) {
+      setAiIsCorrect(geminiResult.isCorrect);
+      setAiFeedback(geminiResult.feedback || 'Rahmat!');
 
-    const isCorrect =
-      userAnswer === correctAnswer ||
-      userAnswer.includes(correctAnswer) ||
-      correctAnswer.includes(userAnswer) ||
-      (isMeaningQuestion && hasMatchingWord);
-
-    // Generate personalized feedback
-    const feedback = generateFeedback(isCorrect, aiUserAnswer.trim(), currentQ.answer, currentQ.word);
-    setAiFeedback(feedback);
-
-    setAiIsCorrect(isCorrect);
-    setAiShowResult(true);
-
-    if (isCorrect) {
-      setAiScore(prev => ({ ...prev, correct: prev.correct + 1 }));
+      if (geminiResult.isCorrect) {
+        setAiScore(prev => ({ ...prev, correct: prev.correct + 1 }));
+      } else {
+        setAiScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      }
     } else {
-      setAiScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      // Fallback to local check if API fails
+      const userAnswer = aiUserAnswer.trim().toLowerCase();
+      const correctAnswer = currentQ.answer.trim().toLowerCase();
+
+      const userWords = userAnswer.split(/\s+/).filter(w => w.length > 1);
+      const correctWords = correctAnswer.split(/\s+/).filter(w => w.length > 1);
+
+      const hasMatchingWord = userWords.some(uw =>
+        correctWords.some(cw => cw.includes(uw) || uw.includes(cw))
+      );
+
+      const isMeaningQuestion = currentQ.type === 'meaning';
+
+      const isCorrect =
+        userAnswer === correctAnswer ||
+        userAnswer.includes(correctAnswer) ||
+        correctAnswer.includes(userAnswer) ||
+        (isMeaningQuestion && hasMatchingWord);
+
+      const feedback = generateFeedback(isCorrect, aiUserAnswer.trim(), currentQ.answer, currentQ.word);
+      setAiFeedback(feedback);
+      setAiIsCorrect(isCorrect);
+
+      if (isCorrect) {
+        setAiScore(prev => ({ ...prev, correct: prev.correct + 1 }));
+      } else {
+        setAiScore(prev => ({ ...prev, incorrect: prev.incorrect + 1 }));
+      }
     }
+
+    setAiShowResult(true);
+    setAiLoadingAnswer(false);
   };
 
   const nextAIQuestion = () => {
@@ -937,6 +977,12 @@ const Vocabulary = () => {
                   </button>
                 </div>
               </div>
+            ) : aiLoading ? (
+              <div className="ai-loading card">
+                <Loader2 size={48} className="spinner" />
+                <h2>Savollar tayyorlanmoqda...</h2>
+                <p>Gemini AI siz uchun shaxsiylashtirilgan savollar yaratmoqda</p>
+              </div>
             ) : (
               <div className="ai-practice">
                 <div className="practice-header">
@@ -987,8 +1033,9 @@ const Vocabulary = () => {
 
                 <div className="practice-actions">
                   {!aiShowResult ? (
-                    <button className="btn-primary" onClick={checkAIAnswer} disabled={!aiUserAnswer.trim()}>
-                      Tekshirish
+                    <button className="btn-primary" onClick={checkAIAnswer} disabled={!aiUserAnswer.trim() || aiLoadingAnswer}>
+                      {aiLoadingAnswer ? <Loader2 size={18} className="btn-spinner" /> : null}
+                      {aiLoadingAnswer ? 'Tekshirilmoqda...' : 'Tekshirish'}
                     </button>
                   ) : (
                     <button className="btn-primary" onClick={nextAIQuestion}>
@@ -1942,6 +1989,31 @@ const Vocabulary = () => {
         .ai-practice .feedback-content svg {
           flex-shrink: 0;
           margin-top: 2px;
+        }
+
+        .ai-loading {
+          text-align: center;
+          padding: 60px 20px;
+        }
+
+        .ai-loading .spinner {
+          color: var(--accent-primary);
+          animation: spin 1s linear infinite;
+          margin-bottom: 24px;
+        }
+
+        .ai-loading h2 {
+          font-size: 24px;
+          margin-bottom: 12px;
+        }
+
+        .ai-loading p {
+          color: var(--text-secondary);
+        }
+
+        .btn-spinner {
+          animation: spin 1s linear infinite;
+          margin-right: 8px;
         }
       `}</style>
     </div>
