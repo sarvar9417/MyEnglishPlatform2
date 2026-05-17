@@ -12,6 +12,7 @@ import Tests from './pages/Tests';
 import Profile from './pages/Profile';
 import IrregularVerbs from './pages/IrregularVerbs';
 import Topics from './pages/Topics';
+import Practice from './pages/Practice';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -149,6 +150,16 @@ function App() {
             <ProtectedRoute>
               <DashboardLayout>
                 <Topics />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/practice"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Practice />
               </DashboardLayout>
             </ProtectedRoute>
           }
