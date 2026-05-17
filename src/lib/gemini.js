@@ -2,6 +2,10 @@
 const API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
+if (!API_KEY) {
+  console.warn('Groq API key not set. Set VITE_GROQ_API_KEY environment variable for AI features.');
+}
+
 export const generateQuestionsWithGemini = async (words) => {
   if (words.length < 3) return [];
 
