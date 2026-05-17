@@ -89,13 +89,23 @@ const Navbar = ({ collapsed, setCollapsed }) => {
           top: 0;
           height: 100vh;
           width: 260px;
-          background: rgba(30, 30, 30, 0.95);
-          backdrop-filter: blur(20px);
-          border-right: 1px solid rgba(255, 255, 255, 0.1);
+          background: var(--bg-secondary);
+          border-right: 1px solid var(--border);
           display: flex;
           flex-direction: column;
-          transition: width 0.3s ease;
+          transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
           z-index: 100;
+        }
+
+        .sidebar::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 200px;
+          background: linear-gradient(180deg, rgba(124, 58, 237, 0.1) 0%, transparent 100%);
+          pointer-events: none;
         }
 
         .sidebar.collapsed {
@@ -106,53 +116,57 @@ const Navbar = ({ collapsed, setCollapsed }) => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          padding: 24px 20px;
+          position: relative;
+          z-index: 1;
         }
 
         .sidebar-logo {
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           text-decoration: none;
         }
 
         .logo-icon {
-          width: 36px;
-          height: 36px;
-          background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
-          border-radius: 10px;
+          width: 40px;
+          height: 40px;
+          background: var(--accent-gradient);
+          border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 700;
+          font-weight: 800;
           color: white;
-          font-size: 18px;
+          font-size: 20px;
+          box-shadow: 0 4px 16px var(--accent-glow);
         }
 
         .logo-text {
-          font-size: 18px;
-          font-weight: 600;
+          font-size: 20px;
+          font-weight: 700;
           color: white;
+          letter-spacing: -0.02em;
         }
 
         .collapse-btn {
-          background: rgba(255, 255, 255, 0.1);
-          border: none;
-          width: 28px;
-          height: 28px;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid var(--border);
+          width: 32px;
+          height: 32px;
           border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          color: rgba(255, 255, 255, 0.6);
+          color: var(--text-secondary);
           transition: all 0.2s ease;
         }
 
         .collapse-btn:hover {
-          background: rgba(255, 255, 255, 0.2);
+          background: rgba(255, 255, 255, 0.1);
           color: white;
+          border-color: var(--border-hover);
         }
 
         .collapse-btn svg {
@@ -166,23 +180,27 @@ const Navbar = ({ collapsed, setCollapsed }) => {
         .sidebar-user {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
           padding: 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+          margin: 0 12px;
+          background: var(--bg-tertiary);
+          border-radius: 12px;
+          border: 1px solid var(--border);
         }
 
         .user-avatar {
-          width: 40px;
-          height: 40px;
-          background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+          width: 44px;
+          height: 44px;
+          background: var(--accent-gradient);
           border-radius: 12px;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-weight: 600;
+          font-weight: 700;
           color: white;
           font-size: 16px;
           flex-shrink: 0;
+          box-shadow: 0 4px 12px var(--accent-glow);
         }
 
         .user-info {
@@ -205,12 +223,13 @@ const Navbar = ({ collapsed, setCollapsed }) => {
           align-items: center;
           gap: 4px;
           font-size: 12px;
-          color: #6EE7B7;
+          color: var(--success);
+          font-weight: 500;
         }
 
         .sidebar-nav {
           flex: 1;
-          padding: 16px 12px;
+          padding: 20px 12px;
           display: flex;
           flex-direction: column;
           gap: 4px;
@@ -220,54 +239,80 @@ const Navbar = ({ collapsed, setCollapsed }) => {
         .nav-item {
           display: flex;
           align-items: center;
-          gap: 12px;
-          padding: 12px 14px;
+          gap: 14px;
+          padding: 14px 16px;
           border-radius: 10px;
-          color: rgba(255, 255, 255, 0.7);
+          color: var(--text-secondary);
           text-decoration: none;
           transition: all 0.2s ease;
           background: none;
           border: none;
           width: 100%;
           font-size: 14px;
+          font-weight: 500;
           cursor: pointer;
+          position: relative;
+        }
+
+        .nav-item::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 3px;
+          height: 0;
+          background: var(--accent-primary);
+          border-radius: 0 2px 2px 0;
+          transition: height 0.2s ease;
         }
 
         .nav-item:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
           color: white;
         }
 
+        .nav-item:hover::before {
+          height: 20px;
+        }
+
         .nav-item.active {
-          background: rgba(139, 92, 246, 0.2);
-          color: #8B5CF6;
+          background: rgba(124, 58, 237, 0.15);
+          color: var(--accent-primary);
+        }
+
+        .nav-item.active::before {
+          height: 24px;
+          background: var(--accent-gradient);
         }
 
         .sidebar-footer {
           padding: 16px 12px;
-          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          border-top: 1px solid var(--border);
+          margin-top: auto;
         }
 
         .sidebar.collapsed .sidebar-header {
           justify-content: center;
-          padding: 20px 12px;
+          padding: 24px 16px;
         }
 
         .sidebar.collapsed .collapse-btn {
           position: absolute;
-          right: -14px;
-          background: rgba(30, 30, 30, 0.95);
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          right: -16px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--border);
         }
 
         .sidebar.collapsed .sidebar-user {
           justify-content: center;
-          padding: 20px 12px;
+          padding: 16px;
+          margin: 0 8px;
         }
 
         .sidebar.collapsed .nav-item {
           justify-content: center;
-          padding: 12px;
+          padding: 14px;
         }
 
         .sidebar.collapsed .nav-item span {

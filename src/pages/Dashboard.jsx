@@ -284,12 +284,16 @@ const Dashboard = () => {
 
       <style>{`
         .dashboard {
-          padding: 32px 40px;
+          padding: 40px 48px;
           min-height: 100vh;
+          background:
+            radial-gradient(ellipse at top left, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
+            radial-gradient(ellipse at bottom right, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+            var(--bg-primary);
         }
 
         .dashboard-content {
-          max-width: 1200px;
+          max-width: 1400px;
           margin: 0 auto;
         }
 
@@ -298,31 +302,33 @@ const Dashboard = () => {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 32px;
+          margin-bottom: 40px;
         }
 
         .header-left h1 {
-          font-size: 28px;
-          font-weight: 600;
+          font-size: 32px;
+          font-weight: 700;
           color: white;
-          margin-bottom: 4px;
+          margin-bottom: 8px;
+          letter-spacing: -0.02em;
         }
 
         .header-left p {
-          color: rgba(255, 255, 255, 0.6);
-          font-size: 15px;
+          color: var(--text-secondary);
+          font-size: 16px;
         }
 
         .streak-pill {
           display: flex;
           align-items: center;
-          gap: 8px;
-          background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
-          padding: 10px 20px;
+          gap: 10px;
+          background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
+          padding: 12px 24px;
           border-radius: 24px;
           color: white;
           font-weight: 600;
           font-size: 15px;
+          box-shadow: 0 4px 16px rgba(249, 115, 22, 0.3);
         }
 
         .streak-label {
@@ -333,36 +339,36 @@ const Dashboard = () => {
 
         /* Stats Section */
         .stats-section {
-          margin-bottom: 32px;
+          margin-bottom: 40px;
         }
 
         .stats-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
+          gap: 20px;
         }
 
         .stat-card.apple {
-          background: rgba(30, 30, 30, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
-          padding: 20px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          padding: 24px;
           display: flex;
           align-items: center;
-          gap: 16px;
-          transition: all 0.3s ease;
+          gap: 18px;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .stat-card.apple:hover {
-          transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.2);
+          transform: translateY(-4px);
+          border-color: var(--border-hover);
+          box-shadow: var(--shadow-md);
         }
 
         .stat-icon-wrap {
-          width: 48px;
-          height: 48px;
-          border-radius: 12px;
+          width: 52px;
+          height: 52px;
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -377,15 +383,17 @@ const Dashboard = () => {
         }
 
         .stat-value {
-          font-size: 24px;
+          font-size: 28px;
           font-weight: 700;
           color: white;
           line-height: 1.2;
+          letter-spacing: -0.02em;
         }
 
         .stat-label {
           font-size: 13px;
-          color: rgba(255, 255, 255, 0.5);
+          color: var(--text-secondary);
+          margin-top: 2px;
         }
 
         .stat-trend {
@@ -393,42 +401,43 @@ const Dashboard = () => {
           align-items: center;
           gap: 4px;
           font-size: 12px;
-          font-weight: 500;
-          padding: 4px 8px;
+          font-weight: 600;
+          padding: 6px 10px;
           border-radius: 8px;
         }
 
         .stat-trend.up {
-          background: rgba(16, 185, 129, 0.2);
-          color: #10B981;
+          background: var(--success-bg);
+          color: var(--success);
         }
 
         .stat-trend.neutral {
-          background: rgba(255, 255, 255, 0.1);
-          color: rgba(255, 255, 255, 0.6);
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text-secondary);
         }
 
         /* Review Banner */
         .review-banner {
           display: flex;
           align-items: center;
-          gap: 20px;
-          background: linear-gradient(135deg, rgba(247, 147, 30, 0.2) 0%, rgba(255, 184, 77, 0.1) 100%);
-          border: 1px solid rgba(247, 147, 30, 0.3);
-          border-radius: 16px;
-          padding: 20px 24px;
-          margin-bottom: 32px;
+          gap: 24px;
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(6, 182, 212, 0.1) 100%);
+          border: 1px solid rgba(124, 58, 237, 0.3);
+          border-radius: 20px;
+          padding: 24px;
+          margin-bottom: 40px;
         }
 
         .banner-icon {
-          width: 48px;
-          height: 48px;
-          background: rgba(247, 147, 30, 0.2);
-          border-radius: 12px;
+          width: 56px;
+          height: 56px;
+          background: var(--accent-gradient);
+          border-radius: 14px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #F7931E;
+          color: white;
+          box-shadow: 0 4px 16px var(--accent-glow);
         }
 
         .banner-content {
@@ -436,82 +445,84 @@ const Dashboard = () => {
         }
 
         .banner-content h3 {
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 600;
           color: white;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
 
         .banner-content p {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.6);
+          font-size: 14px;
+          color: var(--text-secondary);
         }
 
         .banner-btn {
           display: flex;
           align-items: center;
-          gap: 8px;
-          background: #F7931E;
+          gap: 10px;
+          background: var(--accent-gradient);
           color: white;
-          padding: 12px 20px;
-          border-radius: 10px;
+          padding: 14px 24px;
+          border-radius: 12px;
           font-weight: 600;
-          font-size: 14px;
+          font-size: 15px;
           text-decoration: none;
           transition: all 0.3s ease;
+          box-shadow: 0 4px 16px var(--accent-glow);
         }
 
         .banner-btn:hover {
-          filter: brightness(1.1);
-          transform: translateY(-1px);
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px var(--accent-glow);
         }
 
         /* Section Title */
         .section-title {
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 600;
           color: white;
           margin-bottom: 20px;
+          letter-spacing: -0.01em;
         }
 
         /* Modules Section */
         .modules-section {
-          margin-bottom: 32px;
+          margin-bottom: 40px;
         }
 
         .modules-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
+          gap: 20px;
         }
 
         .module-card.apple {
           display: flex;
           align-items: center;
-          gap: 16px;
-          background: rgba(30, 30, 30, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
-          padding: 20px;
+          gap: 18px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 20px;
+          padding: 24px;
           text-decoration: none;
-          transition: all 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .module-card.apple:hover {
-          transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.2);
+          transform: translateY(-4px);
+          border-color: var(--border-hover);
+          box-shadow: var(--shadow-md);
         }
 
         .module-card.apple:hover .module-arrow {
-          transform: translateX(4px);
-          color: #F7931E;
+          transform: translateX(6px);
+          color: var(--accent-primary);
         }
 
         .module-icon {
-          width: 56px;
-          height: 56px;
-          border-radius: 14px;
+          width: 60px;
+          height: 60px;
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -524,61 +535,62 @@ const Dashboard = () => {
         }
 
         .module-info h3 {
-          font-size: 16px;
+          font-size: 18px;
           font-weight: 600;
           color: white;
-          margin-bottom: 4px;
+          margin-bottom: 6px;
         }
 
         .module-info p {
-          font-size: 13px;
-          color: rgba(255, 255, 255, 0.5);
-          margin-bottom: 8px;
+          font-size: 14px;
+          color: var(--text-secondary);
+          margin-bottom: 10px;
         }
 
         .module-stat {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.4);
+          font-size: 13px;
+          color: var(--text-tertiary);
+          font-weight: 500;
         }
 
         .module-arrow {
-          color: rgba(255, 255, 255, 0.3);
+          color: var(--text-tertiary);
           transition: all 0.3s ease;
           flex-shrink: 0;
         }
 
         /* Quick Actions */
         .quick-actions-section {
-          margin-bottom: 32px;
+          margin-bottom: 40px;
         }
 
         .quick-actions-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 16px;
+          gap: 20px;
         }
 
         .quick-action-card.apple {
           display: flex;
           align-items: center;
-          gap: 14px;
-          background: rgba(30, 30, 30, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 14px;
-          padding: 16px 20px;
+          gap: 16px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          padding: 20px 24px;
           text-decoration: none;
           transition: all 0.3s ease;
         }
 
         .quick-action-card.apple:hover {
-          border-color: rgba(255, 255, 255, 0.2);
-          transform: translateY(-2px);
+          border-color: var(--border-hover);
+          transform: translateY(-3px);
+          box-shadow: var(--shadow-sm);
         }
 
         .action-icon {
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
           border-radius: 12px;
           display: flex;
           align-items: center;
@@ -591,23 +603,23 @@ const Dashboard = () => {
         }
 
         .action-content h4 {
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 600;
           color: white;
-          margin-bottom: 2px;
+          margin-bottom: 4px;
         }
 
         .action-content p {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.5);
+          font-size: 13px;
+          color: var(--text-secondary);
         }
 
         .action-badge {
-          background: #F7931E;
+          background: var(--accent-gradient);
           color: white;
-          font-size: 11px;
+          font-size: 12px;
           font-weight: 600;
-          padding: 4px 10px;
+          padding: 6px 12px;
           border-radius: 20px;
         }
 
@@ -617,19 +629,18 @@ const Dashboard = () => {
         }
 
         .activity-list {
-          background: rgba(30, 30, 30, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 16px;
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: 20px;
           overflow: hidden;
         }
 
         .activity-item {
           display: flex;
           align-items: center;
-          gap: 14px;
-          padding: 16px 20px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          gap: 16px;
+          padding: 18px 24px;
+          border-bottom: 1px solid var(--border);
           transition: background 0.2s ease;
         }
 
@@ -638,18 +649,18 @@ const Dashboard = () => {
         }
 
         .activity-item:hover {
-          background: rgba(255, 255, 255, 0.05);
+          background: rgba(255, 255, 255, 0.03);
         }
 
         .activity-icon {
-          width: 32px;
-          height: 32px;
-          background: rgba(255, 255, 255, 0.1);
-          border-radius: 8px;
+          width: 36px;
+          height: 36px;
+          background: var(--bg-tertiary);
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: rgba(255, 255, 255, 0.6);
+          color: var(--text-secondary);
         }
 
         .activity-content {
@@ -662,21 +673,12 @@ const Dashboard = () => {
         .activity-content span:first-child {
           font-size: 14px;
           color: white;
+          font-weight: 500;
         }
 
         .activity-time {
           font-size: 12px;
-          color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Refresh Icon Component */
-        .RefreshCwIcon {
-          animation: spin 2s linear infinite;
-        }
-
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+          color: var(--text-tertiary);
         }
 
         /* Responsive */
@@ -699,11 +701,11 @@ const Dashboard = () => {
           .dashboard-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 16px;
+            gap: 20px;
           }
 
           .header-left h1 {
-            font-size: 24px;
+            font-size: 26px;
           }
 
           .stats-grid,
